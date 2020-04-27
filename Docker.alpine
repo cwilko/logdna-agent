@@ -1,0 +1,23 @@
+FROM arm32v7/node:alpine as builder
+
+COPY qemu-arm-static /usr/bin
+
+WORKDIR /logdna
+
+COPY package.json yarn.lock ./
+
+RUN apk add --update git python g++ make && \
+    NODE_ENV=production yarn install --ignore-optional --non-interactive
+
+COPY index.js ./
+COPY lib ./lib/
+
+FROM arm32v7/node:alpine
+
+WORKDIR /logdna
+
+COPY --from=builder /logdna/node_modules ./node_modules/
+COPY index.js package.json ./
+COPY lib ./lib/
+
+CMD ["node", "index.js"]
